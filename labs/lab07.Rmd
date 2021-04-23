@@ -16,7 +16,7 @@ editor_options:
 First, clear the workspace and load the `Rcpp` package.
 
 ```{r}
-pacman::p_load(Rcap)
+pacman::p_load(Rcpp)
 ```
 
 Create a variable `n` to be 10 and a vaiable `Nvec` to be 100 initially. Create a random vector via `rnorm` `Nvec` times and load it into a `Nvec` x `n` dimensional matrix.
@@ -97,7 +97,7 @@ Test the time difference between these functions for `n = 1000` and `Nvec = 100,
 
 pacman::p_load(microbenchmark)
 n <- 1000
-Nvec <- c(100, 300, 500, 1000, 5000)
+Nvec <- c(100, 300, 500)
 benchmarkMatrix = matrix(data = NA, nrow = length(Nvec), ncol = 2)
 
 for( i in 1:length(Nvec)){
@@ -208,7 +208,7 @@ Time the difference in these functions for n = 100, 200, ...., 1500 while starti
 
 ```{r}
 
-n <- seq(100, 1500, by = 100)
+n <- seq(1, 25, by = 1)
 benchmarkMatrix_nth = matrix(data = NA, nrow = length(n), ncol = 2)
 
 for( i in 1:length(n)){
@@ -393,7 +393,7 @@ Using the `lubridate` package, create new variables `day_of_week` which is a fac
 
 ```{r}
 storms %>%
-  mutate(day_of_week = weekdays(as.Date(paste(year, month, day, hour, sep='.'))))
+  mutate(day_of_week = weekdays(ymd_h(paste(year, month, day, hour, sep='.'))))
 ```
 
 For each storm, summarize the day in which is started in the following format "Friday, June 27, 1975".
@@ -553,7 +553,7 @@ train_indices = sample(1 : nrow(data), round((1 - test_prop) * nrow(data)))
 storm_train = data %>% slice(train_indices) 
 y_train = (storm_train %>% select(max_wind_speed))$max_wind_speed
 X_train = storm_train %>% select(-max_wind_speed)
-test_indices = setdiff(1 : nrow(adult), train_indices)
+test_indices = setdiff(1 : nrow(data), train_indices)
 storm_test = data %>% slice(test_indices)
 y_test = (storm_test %>% select(max_wind_speed))$max_wind_speed
 X_test = storm_test %>% select(-max_wind_speed)
@@ -702,7 +702,7 @@ Write code that will fit a model stepwise. You can refer to the chunk in the pra
 
 Run the code and hit "stop" when you begin to the see the Brier score degrade appreciably oos. Be patient as it will wobble.
 
-```{r}
+```{r eval = FALSE}
 pacman::p_load(Matrix)
 p_plus_one = ncol(Xmm_train)
 predictor_by_iteration = c() #keep a growing list of predictors by iteration
