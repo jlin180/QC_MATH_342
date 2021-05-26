@@ -1,0 +1,381 @@
+---
+title: "Final Project"
+author: "Jia Yu Lin"
+output: pdf_document
+editor_options: 
+  chunk_output_type: inline
+---
+
+Importing Data
+
+```{r}
+pacman::p_load(tidyverse, magritter, data.table, R.utils)
+housing = read.csv("C:\\Users\\Cetus\\Desktop\\housing_data_2016_2017.csv")
+
+housing = as_tibble(housing)
+housing
+
+summary(housing)
+#skim(housing)
+```
+Selecting columns
+```{r}
+housing_data = housing %>%
+  select(approx_year_built, cats_allowed, common_charges, community_district_num, coop_condo, dining_room_type, dogs_allowed, fuel_type, full_address_or_zip_code, garage_exists, kitchen_type, maintenance_cost, num_bedrooms, num_floors_in_building, num_full_bathrooms, num_half_bathrooms, num_total_rooms, parking_charges, pct_tax_deductibl, sq_footage, total_taxes, walk_score, sale_price)
+
+housing_data
+
+summary(housing_data)
+```
+
+Checking for NAs
+
+```{r}
+housing_data %>% 
+  summarise_all(funs(sum(is.na(.))))
+```
+Inspecting data
+```{r}
+# approx_year_built
+housing_data %>%
+  count(approx_year_built)
+
+#percentage of approx_year_built
+# year_built_percentage = table(housing_data$approx_year_built)
+# prop.table(year_built_percentage)
+
+
+# cats_allowed
+housing_data %>%
+  count(cats_allowed)
+
+#percentage of cats_allowed
+# cats_allowed_percentage = table(housing_data$cats_allowed)
+# prop.table(cats_allowed_percentage)
+
+# common_charges
+housing_data %>%
+  count(common_charges)
+
+#community_district_num
+housing_data %>%
+  count(community_district_num)
+
+# community_district_percentage = table(housing_data$community_district_num)
+# prop.table(community_district_percentage)
+
+# coop_condo
+housing_data %>%
+  count(coop_condo)
+
+# dining_room_type
+housing_data %>%
+  count(dining_room_type)
+
+# dogs_allowed
+housing_data %>%
+  count(dogs_allowed)
+
+# fuel_type
+housing_data %>%
+  count(fuel_type)
+
+# full_address_or_zip_code
+housing_data %>%
+  count(full_address_or_zip_code)
+
+# garage_exist
+housing_data %>%
+  count(garage_exists)
+
+# kitchen_type
+housing_data %>%
+  count(kitchen_type)
+
+# maintenance_cost
+housing_data %>%
+  count(maintenance_cost)
+
+# num_bedrooms
+housing_data %>%
+  count(num_bedrooms)
+
+# num_floors_in_building
+housing_data %>%
+  count(num_floors_in_building)
+
+# num_full_bathrooms
+housing_data %>%
+  count(num_full_bathrooms)
+
+# num_half_bathrooms
+housing_data %>%
+  count(num_half_bathrooms)
+
+# num_total_rooms
+housing_data %>%
+  count(num_total_rooms)
+
+# parking_charges
+housing_data %>%
+  count(parking_charges)
+
+# pct_tax_deductibl
+housing_data %>%
+  count(pct_tax_deductibl)
+
+# sq_footage
+housing_data %>%
+  count(sq_footage)
+
+# total_taxes
+housing_data %>%
+  count(total_taxes)
+
+# walk_score
+housing_data %>%
+  count(walk_score)
+
+# sale_price
+housing_data %>%
+  count(sale_price)
+```
+```{r}
+# kitchen_type_percentage = table(housing_data$kitchen_type , exclude=NULL)
+# prop.table(kitchen_type_percentage)
+# housing_data %>% group_by(sq_footage)%>%
+#   summarise(mean= mean(sq_footage), sd= sd(sq_footage), max = max(sq_footage),min = min(sq_footage))
+c(mean = mean(housing_data$maintenance_cost , na.rm = TRUE ), sd= sd(housing_data$maintenance_cost ,  na.rm = TRUE ), max = max(housing_data$maintenance_cost , na.rm = TRUE ),min = min(housing_data$maintenance_cost ,  na.rm = TRUE ) )
+# library(skimr)
+# skim(housing_data)
+```
+
+Turning `dogs_allowed`, `cats_allowed`, `garage_exists` into binary
+```{r}
+# dogs_allowed
+housing_data = housing_data %>%
+  mutate(dogs_allowed = if_else(dogs_allowed == 'no', 0, 1))
+
+housing_data$dogs_allowed = as.factor(housing_data$dogs_allowed)
+
+# cats_allowed
+housing_data = housing_data %>%
+  mutate(cats_allowed = if_else(cats_allowed == 'no', 0, 1))
+
+housing_data$cats_allowed = as.factor(housing_data$cats_allowed)
+
+# garage_exists
+housing_data = housing_data %>%
+  mutate(garage_exists = if_else(is.na(garage_exists), 0, 1))
+
+housing_data$garage_exists = as.factor(housing_data$garage_exists)
+
+#sanity check
+housing_data
+```
+
+Turning `coop_condo`, `dining_room_type`, `fuel_type`, `kitchen_type` into categorical factors
+```{r}
+
+# coop_condo
+housing_data = housing_data %>%
+  mutate(coop_condo = as.factor(coop_condo))
+  
+# dining_room_type
+housing_data = housing_data %>%
+  mutate(dining_room_type = as.factor(dining_room_type))
+
+# fuel_type
+tabulate = sort(table(housing_data$fuel_type))
+
+housing_data$fuel_type = as.character(housing_data$fuel_type)
+
+housing_data$fuel_type = ifelse(housing_data$fuel_type %in% names(tabulate[tabulate < 10]), "other", housing_data$fuel_type)
+
+housing_data$fuel_type = as.factor(housing_data$fuel_type)
+
+# kitchen_type
+             
+housing_data$kitchen_type = as.character(housing_data$kitchen_type)
+
+housing_data$kitchen_type = ifelse(tolower(substr(housing_data$kitchen_type, 1, 3)) == "com" , "combo", housing_data$kitchen_type)
+
+housing_data$kitchen_type = ifelse(tolower(substr(housing_data$kitchen_type, 1, 3)) == "eat" , "eat in", housing_data$kitchen_type)
+
+housing_data$kitchen_type = ifelse(tolower(substr(housing_data$kitchen_type, 1, 3)) == "eff" , "efficiency", housing_data$kitchen_type)
+
+housing_data$kitchen_type = as.factor(housing_data$kitchen_type)
+
+# drop 1955 row
+
+housing_data = housing_data[housing_data$kitchen_type != "1955", ]
+
+# sanity check
+housing_data 
+
+```
+
+
+`parking_charges`, `pct_tax_deductibl`, `total_taxes`, `num_half_bathrooms`, `common_charges`, `maintenance_cost` turned into numeric
+```{r}
+# parking_charges
+housing_data$parking_charges = as.numeric(gsub("\\$", "", housing_data$parking_charges))
+
+# pct_tax_deductibl
+
+# total_taxes
+housing_data$total_taxes = as.numeric(gsub("\\$", "", housing_data$total_taxes))
+
+# num_half_bathrooms
+
+
+# common_charges
+housing_data$common_charges = as.numeric(gsub("\\$", "", housing_data$common_charges))
+
+# maintenance_cost
+housing_data$maintenance_cost = as.numeric(gsub("\\$", "", housing_data$maintenance_cost))
+
+
+housing_data
+```
+
+Cleaning up `sale_price`
+```{r}
+housing_data$sale_price = as.numeric(gsub("[\\$,]", "", housing_data$sale_price))
+
+housing_data = housing_data[!is.na(housing_data$sale_price), ]
+
+housing_data
+```
+
+Split X and y
+```{r}
+# full_address_or_zip_code taken out
+X = housing_data %>% select(approx_year_built, cats_allowed, common_charges, community_district_num, coop_condo, dining_room_type, dogs_allowed, fuel_type, garage_exists, kitchen_type, maintenance_cost, num_bedrooms, num_floors_in_building, num_full_bathrooms, num_half_bathrooms, num_total_rooms, parking_charges, pct_tax_deductibl, sq_footage, total_taxes, walk_score)
+
+y = housing_data$sale_price
+```
+
+
+Missingness
+```{r}
+
+pacman::p_load(missForest)
+
+XimpMF = missForest(data.frame(X))$ximp
+
+XimpMF
+```
+
+
+```{r}
+XimpMF$sale_price = y
+```
+
+
+Loading other data
+```{r}
+# # This is for calculating distances with lat-long
+# pacman::p_load(geosphere)
+# 
+# # This is for using google map API or whatever
+# pacman::p_load(ggmap)
+# 
+# # WORKS TO PULL LAT-LONG
+# register_google(key = "u need api key")
+# pacman::p_load(ggmap)
+# locs <- housing_data[sample(1000),]$full_address_or_zip_code
+# newlocs = geocode(locs, output = "latlon")
+# newlocs
+# ?register_google
+# 
+# pacman::p_load(geosphere)
+# # dist array is just me testing distances using the function
+# for (i in 1:1000) {
+#   dist_array[i] = distm(midtown_coords, c(abs(newlocs$lat[i]), abs(newlocs$lon[i])), fun = distHaversine) / 1609 # divide by 1609 to turn into miles
+# }
+```
+
+Splitting data for training
+```{r}
+seed = 1984
+set.seed(seed)
+K = 5
+test_prop = 1 / K
+train_indices = sample(1 : nrow(XimpMF), round((1 - test_prop) * nrow(XimpMF)))
+XimpMF_train = XimpMF[train_indices, ]
+y_train = XimpMF_train$sale_price
+X_train = XimpMF_train
+X_train$sale_price = NULL
+
+test_indices = setdiff(1 : nrow(XimpMF), train_indices)
+XimpMF_test = XimpMF[test_indices, ]
+y_test = XimpMF_test$sale_price
+X_test = XimpMF_test
+X_test$sale_price = NULL
+
+```
+
+
+Loading in YARF
+```{r}
+if (!pacman::p_isinstalled(YARF)){
+  pacman::p_install_gh("kapelner/YARF/YARFJARs", ref = "dev")
+  pacman::p_install_gh("kapelner/YARF/YARF", ref = "dev", force = TRUE)
+}
+options(java.parameters = "-Xmx4000m")
+pacman::p_load(YARF)
+```
+
+Regression Tree (training)
+```{r}
+reg_tree_mod = YARFCART(X_train, y_train)
+illustrate_trees(reg_tree_mod, max_depth = 5, length_in_px_per_half_split = 30, open_file = TRUE)
+
+```
+
+OLS (training)
+```{r}
+OLS = lm(y_train ~ ., data.frame(X_train))
+
+summary(OLS)
+summary(OLS)$r.squared
+
+#RMSE
+sd(y_train - OLS$fitted.values)
+
+```
+
+
+OLS (testing)
+```{r}
+y_hat_test_linear = predict(OLS, X_test)
+e = y_test - y_hat_test_linear
+
+#RMSe
+sd(e)
+
+#r^2s
+1 - sd(e) / sd(y_test)
+```
+
+
+
+
+RF
+
+```{r}
+num_trees = 500
+mod_rf_2 = YARF(X_train, y_train, num_trees = num_trees, seed = seed, calculate_oob_error = FALSE, mtry = 7)
+#summary(mod_rf_2)
+mod_rf_1 = YARF(X_train, y_train)
+summary(mod_rf_1)
+
+rmse_rf = sd(y_test - predict(mod_rf_1, X_test))
+#rmse_rf =sqrt(mean((y_test - predict(mod_rf, X_test))^2))
+rmse_rf
+
+1 - rmse_rf / sd(y_test)
+
+illustrate_trees(mod_rf_1, max_depth = 5, length_in_px_per_half_split = 30, open_file = TRUE)
+```
